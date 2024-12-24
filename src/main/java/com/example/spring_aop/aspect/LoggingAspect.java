@@ -1,41 +1,27 @@
 package com.example.spring_aop.aspect;
 
-import com.example.spring_aop.config.OpenTelemetryConfig;
-import io.opentelemetry.api.common.AttributeKey;
+
+import com.example.spring_aop.config.LogbackConfig;
+import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.context.Scope;
+import io.opentelemetry.api.trace.SpanContext;
 import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.Around;
-import org.aspectj.lang.annotation.Aspect;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.aspectj.lang.annotation.*;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 
-@Aspect
 @Component
+@Aspect
 public class LoggingAspect {
-    private final OpenTelemetryConfig openTelemetryConfig;
-
-    @Autowired
-    public LoggingAspect(OpenTelemetryConfig openTelemetryConfig) {
-        this.openTelemetryConfig = openTelemetryConfig;
-    }
-
-    @Around("@annotation(io.opentelemetry.extension.annotations.WithSpan) || execution(* com.example..*(..))")
-    public Object traceMethod(ProceedingJoinPoint joinPoint) throws Throwable {
+    @Around("execution(* com.example..*(..))")
+    public Object addTraceIdsToMDC(ProceedingJoinPoint joinPoint) throws Throwable {
         String spanName = joinPoint.getSignature().toShortString();
-        System.out.println("SPAN NAME:: "+spanName);
-        Span span = openTelemetryConfig.tracer().spanBuilder(spanName).startSpan();
-        System.out.println("SPAN:: "+span);
-        try (Scope scope = span.makeCurrent()) {
-            System.out.println("Trace ID: " + span.getSpanContext().getTraceId());
-            System.out.println("Span ID: " + span.getSpanContext().getSpanId());
-            return joinPoint.proceed();
-        } catch (Exception ex) {
-            span.recordException(ex);
-            throw ex;
-        } finally {
-            span.end();
-        }
+        System.out.println("SPAN NAME FROM ASPECT::"+spanName);
+        Span span = OpenTelemetry.noop().getTracer("spring-aop")
+                .spanBuilder(spanName).startSpan();
+        Object result = joinPoint.proceed();
+        System.out.println("SPAN CREATED::"+span);
+        System.out.println("RESULT::"+result);
+        return result;
     }
-
 }

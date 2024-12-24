@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service;
 @Service
 public class MyService {
 
-    @WithSpan
     public void performTask() {
         System.out.println("Task performed!");
     }
