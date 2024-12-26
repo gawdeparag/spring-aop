@@ -1,5 +1,6 @@
 package com.example.spring_aop.config;
 
+import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
@@ -10,35 +11,32 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class LogbackConfig {
+public class LoggingConfig {
 
     @PostConstruct
-    public static void configure() {
+    public void configureLogger() {
         LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
-//        context.reset(); // Reset to remove default configurations
-        System.out.println("CONTEXT IN LOGBACK CONFIG::"+context.getName());
 
+        // Create a console appender
         ConsoleAppender<ILoggingEvent> consoleAppender = new ConsoleAppender<>();
         consoleAppender.setContext(context);
 
-        // Create a PatternLayoutEncoder
+        // Set a pattern layout encoder for the appender
         PatternLayoutEncoder encoder = new PatternLayoutEncoder();
         encoder.setContext(context);
-        encoder.setPattern("%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg trace_id=%X{trace_id} span_id=%X{span_id}%n");
+        encoder.setPattern("%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n");
         encoder.start();
-        System.out.println("ENCODER::"+encoder);
 
-        // Create a ConsoleAppender
         consoleAppender.setEncoder(encoder);
         consoleAppender.start();
-        System.out.println("CONSOLE APPENDER::"+consoleAppender.getEncoder().toString());
 
         // Configure the root logger
         Logger rootLogger = context.getLogger(Logger.ROOT_LOGGER_NAME);
+        rootLogger.setLevel(Level.INFO); // Set the desired log level (INFO, DEBUG, etc.)
         rootLogger.addAppender(consoleAppender);
-        rootLogger.setLevel(ch.qos.logback.classic.Level.INFO);
 
-        System.out.println("ROOT LOGGER::"+rootLogger.getLevel());
-        System.out.println("Logback has been configured programmatically.");
+        // Optionally, configure a specific logger
+        Logger specificLogger = context.getLogger("io.opentelemetry.exporter.logging");
+        specificLogger.setLevel(Level.DEBUG); // Customize level for specific package
     }
 }
