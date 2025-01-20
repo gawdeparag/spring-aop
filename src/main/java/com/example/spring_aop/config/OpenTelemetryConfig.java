@@ -1,7 +1,9 @@
 package com.example.spring_aop.config;
 
-import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
+import io.opentelemetry.context.propagation.ContextPropagators;
+import io.opentelemetry.context.propagation.TextMapPropagator;
 import io.opentelemetry.sdk.OpenTelemetrySdk;
 import io.opentelemetry.sdk.trace.SdkTracerProvider;
 import io.opentelemetry.sdk.trace.export.SimpleSpanProcessor;
@@ -14,7 +16,6 @@ public class OpenTelemetryConfig {
 
     @Bean
     public Tracer tracer() {
-        // LoggingSpanExporter for debugging
         LoggingSpanExporter exporter = new LoggingSpanExporter();
 
         // Set up SdkTracerProvider with LoggingSpanExporter
@@ -22,12 +23,15 @@ public class OpenTelemetryConfig {
                 .addSpanProcessor(SimpleSpanProcessor.create(exporter))
                 .build();
 
+        TextMapPropagator textMapPropagator = W3CTraceContextPropagator.getInstance();
+
         // Register OpenTelemetry globally
-        OpenTelemetrySdk.builder()
+        OpenTelemetrySdk openTelemetrySdk = OpenTelemetrySdk.builder()
                 .setTracerProvider(tracerProvider)
+                .setPropagators(ContextPropagators.create(textMapPropagator))
                 .buildAndRegisterGlobal();
 
         // Return the Tracer
-        return GlobalOpenTelemetry.getTracer("spring-aop");
+        return openTelemetrySdk.getTracer("spring-aop");
     }
 }
