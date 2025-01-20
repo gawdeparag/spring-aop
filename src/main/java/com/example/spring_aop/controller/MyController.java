@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class MyController {
     @Autowired
-    MyService myService;
+    private MyService myService;
 
     @GetMapping("/task")
     public void performTask() {
@@ -16,5 +16,7 @@ public class MyController {
     }
 
     @GetMapping("/hello")
-    public void printHello() { myService.hello(); }
+    public void printHello() {
+        myService.hello();
+    }
 }
